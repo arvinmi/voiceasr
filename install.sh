@@ -5,6 +5,9 @@ set -e
 INSTALL_DIR="$HOME/.voiceasr"
 PLIST="$HOME/Library/LaunchAgents/com.voiceasr.server.plist"
 
+# find python lib path
+PYLIB=$(dirname "$(find /opt/homebrew/Cellar -name 'libpython3*.dylib' -path '*/Frameworks/*' 2>/dev/null | head -1)")
+
 mkdir -p "$INSTALL_DIR"
 cp server.py "$INSTALL_DIR/"
 cp -r .venv "$INSTALL_DIR/"
@@ -26,6 +29,8 @@ cat > "$PLIST" << EOF
     <dict>
         <key>PATH</key>
         <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>DYLD_LIBRARY_PATH</key>
+        <string>$PYLIB</string>
     </dict>
     <key>StandardOutPath</key><string>$INSTALL_DIR/server.log</string>
     <key>StandardErrorPath</key><string>$INSTALL_DIR/server.log</string>
