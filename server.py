@@ -2,9 +2,22 @@
 from fastapi import FastAPI, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-import torch, tempfile, os
+from typing import Any, cast
+import os
+import re
+import tempfile
+import torch
 
 pipe, device = None, None
+MEDASR_LEADING_MARKER_RE = re.compile(r"^(?:[\w -]{1,40}\]\.?\s*|\]\.?\s*)+")
+
+
+def clean_transcript(text: str) -> str:
+  text = (
+    text.replace("</s>", "").replace("<s>", "").replace("{new paragraph}", "\n\n").replace("{new line}", "\n").strip()
+  )
+
+  return MEDASR_LEADING_MARKER_RE.sub("", text).lstrip()
 
 
 def load_model():
@@ -50,10 +63,9 @@ async def transcribe(
     path = f.name
 
   try:
-    text = pipe(path, chunk_length_s=20, stride_length_s=2)["text"]
-    text = (
-      text.replace("</s>", "").replace("<s>", "").replace("{new paragraph}", "\n\n").replace("{new line}", "\n").strip()
-    )
+    result = cast(dict[str, Any], pipe(path, chunk_length_s=20, stride_length_s=2))
+    text = cast(str, result["text"])
+    text = clean_transcript(text)
     return text if response_format == "text" else {"text": text}
   finally:
     os.unlink(path)
