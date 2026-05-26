@@ -128,7 +128,7 @@ Set Environment = Shell.Environment("PROCESS")
 Environment("PATH") = "$FFmpegBinDir;" & Environment("PATH")
 Environment("HF_HOME") = "$HuggingFaceHome"
 Shell.CurrentDirectory = "$InstallDir"
-Shell.Run "cmd.exe /c " & Chr(34) & "$Python" & Chr(34) & " " & Chr(34) & "$Server" & Chr(34) & " >> " & Chr(34) & "$LogFile" & Chr(34) & " 2>&1", 0, False
+Shell.Run "cmd.exe /c " & Chr(34) & Chr(34) & "$Python" & Chr(34) & " -u " & Chr(34) & "$Server" & Chr(34) & " >> " & Chr(34) & "$LogFile" & Chr(34) & " 2>&1" & Chr(34), 0, False
 "@
 Set-Content -Path $Launcher -Value $LauncherContent -Encoding ASCII
 
