@@ -17,7 +17,7 @@ macOS:
 Windows:
 
 ```powershell
-.\install-win.ps1
+powershell -ExecutionPolicy Bypass -File .\install-win.ps1
 ```
 
 > Note: This script will setup and install the VoiceASR server as a scheduled task, which will start automatically on login.
@@ -37,6 +37,7 @@ macOS:
 
 ```
 curl http://localhost:8000/           # server health
+tail -f ~/.voiceasr/server.log        # server log
 launchctl stop com.voiceasr.server    # stop
 launchctl start com.voiceasr.server   # start
 ./uninstall-mac.sh                    # uninstall
@@ -46,7 +47,8 @@ Windows:
 
 ```
 curl http://localhost:8000/           # server health
+Get-Content ~/.voiceasr/server.log -Wait # server log
 Stop-ScheduledTask VoiceASR           # stop
 Start-ScheduledTask VoiceASR          # start
-.\uninstall-win.ps1                   # uninstall
+powershell -ExecutionPolicy Bypass -File .\uninstall-win.ps1  # uninstall
 ```

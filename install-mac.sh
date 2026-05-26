@@ -5,6 +5,7 @@ set -e
 INSTALL_DIR="$HOME/.voiceasr"
 PLIST="$HOME/Library/LaunchAgents/com.voiceasr.server.plist"
 VENV_DIR="$INSTALL_DIR/.venv"
+HUGGINGFACE_HOME="$INSTALL_DIR/huggingface"
 PYTHON="$VENV_DIR/bin/python"
 SERVER="$INSTALL_DIR/server.py"
 
@@ -28,12 +29,17 @@ login_hugging_face() {
     return
   fi
 
-  HF_TOKEN="$token" "$PYTHON" -c "import os; from huggingface_hub import login; login(token=os.environ['HF_TOKEN'], add_to_git_credential=False)"
+  HF_HOME="$HUGGINGFACE_HOME" HF_TOKEN="$token" "$PYTHON" -c "import os; from huggingface_hub import login; login(token=os.environ['HF_TOKEN'], add_to_git_credential=False)"
   unset token
 }
 
 test_medasr_access() {
-  "$PYTHON" -c "from huggingface_hub import hf_hub_download; hf_hub_download('google/medasr', 'config.json')"
+  HF_HOME="$HUGGINGFACE_HOME" "$PYTHON" -c "from huggingface_hub import hf_hub_download; hf_hub_download('google/medasr', 'config.json')"
+}
+
+warmup_medasr() {
+  echo "Downloading and loading MedASR. This can take several minutes..."
+  HF_HOME="$HUGGINGFACE_HOME" "$PYTHON" -c "import sys; sys.path.insert(0, '$INSTALL_DIR'); from server import load_model; load_model()"
 }
 
 require_command uv "Install it with: brew install uv"
@@ -47,7 +53,7 @@ fi
 stop_voiceasr
 rm -f "$PLIST"
 rm -rf "$INSTALL_DIR"
-mkdir -p "$INSTALL_DIR"
+mkdir -p "$INSTALL_DIR" "$HUGGINGFACE_HOME"
 cp server.py "$SERVER"
 
 uv venv --python 3.12 "$VENV_DIR"
@@ -55,6 +61,7 @@ uv pip install --python "$PYTHON" fastapi uvicorn torch python-multipart hugging
 
 login_hugging_face
 test_medasr_access
+warmup_medasr
 
 cat > "$PLIST" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -73,6 +80,8 @@ cat > "$PLIST" << EOF
     <dict>
         <key>PATH</key>
         <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HF_HOME</key>
+        <string>$HUGGINGFACE_HOME</string>
     </dict>
     <key>StandardOutPath</key><string>$INSTALL_DIR/server.log</string>
     <key>StandardErrorPath</key><string>$INSTALL_DIR/server.log</string>

@@ -5,10 +5,12 @@ $TaskName = "VoiceASR"
 $User = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 $ScriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Get-Location }
 $VenvDir = Join-Path $InstallDir ".venv"
+$HuggingFaceHome = Join-Path $InstallDir "huggingface"
 $Python = Join-Path $VenvDir "Scripts\python.exe"
 $Server = Join-Path $InstallDir "server.py"
 $ServerSource = Join-Path $ScriptDir "server.py"
 $Launcher = Join-Path $InstallDir "run-hidden.vbs"
+$LogFile = Join-Path $InstallDir "server.log"
 $Packages = @(
   "fastapi",
   "uvicorn",
@@ -23,7 +25,7 @@ function Stop-VoiceASR {
   Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
   Get-CimInstance Win32_Process |
     Where-Object {
-      ($_.Name -in @("python.exe", "pythonw.exe")) -and
+      ($_.Name -in @("python.exe", "pythonw.exe", "cmd.exe")) -and
       ($_.CommandLine -like "*$InstallDir*") -and
       ($_.CommandLine -like "*server.py*")
     } |
@@ -66,15 +68,35 @@ function Login-HuggingFace($Token) {
   }
 
   $env:HF_TOKEN = $Token
+  $env:HF_HOME = $HuggingFaceHome
   try {
     & $Python -c "import os; from huggingface_hub import login; login(token=os.environ['HF_TOKEN'], add_to_git_credential=False)"
   } finally {
     Remove-Item Env:HF_TOKEN -ErrorAction SilentlyContinue
+    Remove-Item Env:HF_HOME -ErrorAction SilentlyContinue
   }
 }
 
 function Test-MedASRAccess {
-  & $Python -c "from huggingface_hub import hf_hub_download; hf_hub_download('google/medasr', 'config.json')"
+  $env:HF_HOME = $HuggingFaceHome
+  try {
+    & $Python -c "from huggingface_hub import hf_hub_download; hf_hub_download('google/medasr', 'config.json')"
+  } finally {
+    Remove-Item Env:HF_HOME -ErrorAction SilentlyContinue
+  }
+}
+
+function Warmup-MedASR {
+  echo "Downloading and loading MedASR. This can take several minutes..."
+  $OriginalPath = $env:PATH
+  $env:HF_HOME = $HuggingFaceHome
+  $env:PATH = "$FFmpegBinDir;$env:PATH"
+  try {
+    & $Python -c "import sys; sys.path.insert(0, r'$InstallDir'); from server import load_model; load_model()"
+  } finally {
+    Remove-Item Env:HF_HOME -ErrorAction SilentlyContinue
+    $env:PATH = $OriginalPath
+  }
 }
 
 Assert-Command "uv" "Install it with: winget install astral-sh.uv"
@@ -88,6 +110,7 @@ Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction Silent
 Remove-Item -Path $InstallDir -Recurse -Force -ErrorAction SilentlyContinue
 
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+New-Item -ItemType Directory -Force -Path $HuggingFaceHome | Out-Null
 Copy-Item -Path $ServerSource -Destination $Server -Force
 
 uv venv --python 3.12 $VenvDir
@@ -97,13 +120,15 @@ $Token = Read-HuggingFaceToken
 Login-HuggingFace $Token
 $Token = $null
 Test-MedASRAccess
+Warmup-MedASR
 
 $LauncherContent = @"
 Set Shell = CreateObject("WScript.Shell")
 Set Environment = Shell.Environment("PROCESS")
 Environment("PATH") = "$FFmpegBinDir;" & Environment("PATH")
+Environment("HF_HOME") = "$HuggingFaceHome"
 Shell.CurrentDirectory = "$InstallDir"
-Shell.Run Chr(34) & "$Python" & Chr(34) & " " & Chr(34) & "$Server" & Chr(34), 0, False
+Shell.Run "cmd.exe /c " & Chr(34) & "$Python" & Chr(34) & " " & Chr(34) & "$Server" & Chr(34) & " >> " & Chr(34) & "$LogFile" & Chr(34) & " 2>&1", 0, False
 "@
 Set-Content -Path $Launcher -Value $LauncherContent -Encoding ASCII
 
