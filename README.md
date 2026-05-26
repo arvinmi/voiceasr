@@ -8,7 +8,7 @@ Google MedASR local endpoint for VoiceInk, Handy, and other OpenAI-compatible AP
 
 macOS:
 
-```bash
+```
 ./install-mac.sh
 ```
 
@@ -16,7 +16,7 @@ macOS:
 
 Windows:
 
-```powershell
+```
 powershell -ExecutionPolicy Bypass -File .\install-win.ps1
 ```
 
