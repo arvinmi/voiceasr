@@ -4,12 +4,6 @@ Google MedASR local endpoint for VoiceInk, Handy, and other OpenAI-compatible AP
 
 ## Setup
 
-Run setup and install:
-
-```bash
-./setup.sh
-```
-
 > Note: You must accept the model license at https://huggingface.co/google/medasr
 
 macOS:
@@ -18,7 +12,7 @@ macOS:
 ./install-mac.sh
 ```
 
-> Note: This script will install the VoiceASR server as a launchd service, which will start automatically on login.
+> Note: This script will setup and install the VoiceASR server as a launchd service, which will start automatically on login.
 
 Windows:
 
@@ -26,7 +20,7 @@ Windows:
 .\install-win.ps1
 ```
 
-> Note: This script will install the VoiceASR server as a scheduled task, which will start automatically on login.
+> Note: This script will setup and install the VoiceASR server as a scheduled task, which will start automatically on login.
 
 ## VoiceInk
 
