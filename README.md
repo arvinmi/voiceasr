@@ -36,19 +36,19 @@ Add custom model in Settings > Transcription:
 macOS:
 
 ```
-curl http://localhost:8000/           # server health
-tail -f ~/.voiceasr/server.log        # server log
-launchctl stop com.voiceasr.server    # stop
-launchctl start com.voiceasr.server   # start
-./uninstall-mac.sh                    # uninstall
+curl http://localhost:8000/                                   # server health
+tail -f ~/.voiceasr/server.log                                # server log
+launchctl stop com.voiceasr.server                            # stop
+launchctl start com.voiceasr.server                           # start
+./uninstall-mac.sh                                            # uninstall
 ```
 
 Windows:
 
 ```
-curl http://localhost:8000/           # server health
-Get-Content ~/.voiceasr/server.log -Wait # server log
-Stop-ScheduledTask VoiceASR           # stop
-Start-ScheduledTask VoiceASR          # start
+curl http://localhost:8000/                                   # server health
+Get-Content ~/.voiceasr/server.log -Wait                      # server log
+Stop-ScheduledTask VoiceASR                                   # stop
+Start-ScheduledTask VoiceASR                                  # start
 powershell -ExecutionPolicy Bypass -File .\uninstall-win.ps1  # uninstall
 ```
