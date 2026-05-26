@@ -4,7 +4,7 @@ Google MedASR local endpoint for VoiceInk, Handy, and other OpenAI-compatible AP
 
 ## Setup
 
-> Note: You must accept the model license at https://huggingface.co/google/medasr
+> Note: You must accept the model license [here](https://huggingface.co/google/medasr) and create a "Read" access token [here](https://huggingface.co/settings/tokens) to login via the cli.
 
 macOS:
 
@@ -35,7 +35,7 @@ Add custom model in Settings > Transcription:
 
 macOS:
 
-```bash
+```
 curl http://localhost:8000/           # server health
 launchctl stop com.voiceasr.server    # stop
 launchctl start com.voiceasr.server   # start
@@ -44,7 +44,7 @@ launchctl start com.voiceasr.server   # start
 
 Windows:
 
-```powershell
+```
 curl http://localhost:8000/           # server health
 Stop-ScheduledTask VoiceASR           # stop
 Start-ScheduledTask VoiceASR          # start
